@@ -51,9 +51,9 @@ library(lindia)
 library(lmtest)
 ```
 
-<!-- \title{Modelización lineal del salario} -->
-<!-- \author{Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry} -->
-<!-- \date {Noviembre 2020} -->
+\title{Modelización lineal del salario} 
+ \author{Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry} 
+ \date {Noviembre 2020} 
 
 
 
@@ -77,7 +77,7 @@ En este proyecto aplicaremos los conceptos y métodos bayesianos aprendidos en e
 La base cuenta con observaciones de 526 personas y con las siguientes 22 variables: Salario (promedio por hora, medido en dólares), Años de Educación, Años de Experiencia, Antigüedad, Raza (variable indicadora, 1 si la persona no es de raza blanca), Sexo, Estado Civil (vale 1 si la persona está casada), Número de Dependientes, Región Metropolitana (vale 1 si la persona vive en dicha región), Región (dividida en tres variales indicadoras: Norte, Sur y Oeste), Rama de Actividad (dividida en tres variables indicadoras: Construcción, Comercio y Servicios), Ocupación (tres variables indicadoras: Profesional, Administrativos y Servicios), el logaritmo de la variable Salario y los cuadrados de las variables Experiencia y Antigüedad.
 <!-- Contábamos con una variable indicadora más, llamada  _"profserv"_ , sobre la cual no poseíamos información por lo que optamos por removerla.  -->
  
-```{r, results='hide'}
+```{r, results=FALSE, echo=FALSE}
 datos <- read_delim("wage1.txt", delim = "\t") %>% 
   as.data.frame %>% 
   clean_names() %>%
@@ -100,7 +100,7 @@ datos <- datos %>%
 ## Variables Indicadoras
 Inicialmente modificamos la base para llevarla a una forma que nos parecía más práctica de trabajar, agrupando variables que refieren a una sola característica de los datos y estaban en una forma binaria. Estas variables son la Región, separada en la base original en Norte, Sur y Oeste; la Rama de Actividad, separada en Construcción, Servicios y Comercio; y la Ocupación, separada en Profesional, Administrativos y Servicios. Luego de consultar a las docentes optamos por no descartar las variables indicadoras ya que nos permiten su utilización a la hora de aplicar un modelo lineal multivariado y a su vez mantenemos la variable agrupada para poder usarla a la hora de manipular y graficar datos.
 
-```{r}
+```{r, results=FALSE, echo=FALSE}
 #datos finales
 datos <- datos %>% 
   mutate(
@@ -400,7 +400,7 @@ Con el resto de las variables econtramos que las proporciones entre las categor�
 
 
 <!-- ### Tests de hipótesis iniciales -->
-```{r datosmod }
+```{r datosmod, results=FALSE, echo=FALSE }
 datos2 <- dplyr::select(datos, -c(region, rama_act, ocupacion)) 
 
 
@@ -452,7 +452,7 @@ summmodelo2
 <!-- A continuación presentamos un cuadro con los distintos p-valores de dichos contrastes. -->
 
 
-```{r pvals.modelo2}
+```{r pvals.modelo2, results=FALSE, echo=FALSE}
 pvals2 <- round(summary(modelo2)$coefficients[2:24,4],3)
 
 names(pvals2) <- NULL
@@ -463,7 +463,7 @@ pvals2 <- cbind("Variable" = names.pvals2, "p-valor"=pvals2) %>% as.data.frame()
 ```
 
 
-```{r muestro.pvals.modelo2, include = TRUE, results='asis'}
+```{r muestro.pvals.modelo2, include = TRUE, results=FALSE, echo=FALSE}
 xtable(pvals2, caption="Tabla de p-valores para el modelo con todas las variables explicativas.") 
 ```
 
@@ -482,7 +482,7 @@ xtable(pvals2, caption="Tabla de p-valores para el modelo con todas las variable
 
 <!-- ### Selección del mejor modelo -->
 
-```{r modelo3, results = 'hide'}
+```{r modelo3, results=FALSE, echo=FALSE}
 modelo3 <- step(modelo2, direction = "backward", trace = 0)
 summary(modelo3)
 
@@ -501,7 +501,7 @@ summary(modelo3)
 <!-- Utilizamos el método de selección _backward_ secuencial del mejor modelo, para eliminar las variables que menos aportan al modelo, mediante el criterio de selección de Akaike (AIC). Dicho método va eliminando variables con el menor AIC de una en una, en presencia de las demás que todavía se consideran. En la tabla que presentamos a continuación se muestran las variables incluidas en el modelo al que llegamos, con sus respectivos p-valores: -->
 
 
-```{r pvals.modelo3}
+```{r pvals.modelo3, results=FALSE, echo=FALSE}
 pvals3 <- summary(modelo3)$coefficients[2:16,c(1,4)]
 
 
@@ -520,7 +520,7 @@ pvals3 <- cbind(nombrespvals3, round(pvals3,3)) %>%
 ```
 
 
-```{r muestro.pvals.modelo3, include = TRUE, results='asis'}
+```{r muestro.pvals.modelo3, results=FALSE, echo=FALSE}
 xtable(pvals3, caption="p-valores y coefs. estimados para el modelo obtenido a través del método de selección backward.") 
 ```
 
@@ -534,7 +534,7 @@ xtable(pvals3, caption="p-valores y coefs. estimados para el modelo obtenido a t
 
 <!-- [^2]: The "Mincer Equation" Thirty Years after Schooling, Experience, and Earnings. Lemieux, Thomas. (2006). pág. 2.  -->
 
-```{r restricciones}
+```{r restricciones, results=FALSE, echo=FALSE}
 
 modeloqwe <- update(modelo3,.~. +I(northcen+south)-northcen-south)
 
@@ -571,7 +571,7 @@ modelo3 <- modeloqwe3
 
 <!-- Queremos ver si es viable incluir la variable raza que ha demostrado ser importante para explicar el salario [^3]. Su contraste de significación en presencia de las demás variables del modelo luego de aplicar el método _backward_ nos lleva a un p-valor del 0.78, el cual resulta muy alto para optar por incluirla de todas maneras al modelo.     -->
 
-```{r modelo4}
+```{r modelo4, results=FALSE, echo=FALSE}
 modelo4 <- update(modelo3, .~. + nonwhite)
 
 
@@ -597,7 +597,7 @@ summary(modelo4)
 
 <!-- Dado que suponemos que los errores tienen esperanza igual a 0 y varianza constante, si eso se cumple, esperamos que a simple vista los residuos se distribuyan aleatoriamente en torno al 0, sin seguir ningún patrón en particular. -->
 
-```{r}
+```{r, results=FALSE, echo=FALSE}
 modeloviejo <- step(lm(salario ~., datos[,-c(19,22,23,24)]), direction = "backward", trace = 0) 
 
 
@@ -605,7 +605,7 @@ modeloviejo <- step(lm(salario ~., datos[,-c(19,22,23,24)]), direction = "backwa
 ```
 
 
-```{r graf.res.vs.ygorro, include=TRUE, fig.cap="Gráfico de residuos en función de los valores predichos por el modelo." }
+```{r graf.res.vs.ygorro, fig.cap="Gráfico de residuos en función de los valores predichos por el modelo.", results=FALSE, echo=FALSE }
 datosres <- cbind(modelo3$fitted.values, modelo3$residuals) %>%
   as.data.frame() %>% 
   rename(residuos = "V2", ygorro = "V1")
@@ -628,7 +628,7 @@ datosres %>%
 
 <!-- Por lo demás, en este gráfico podemos ver que en principio los residuos parecen estar distribuidos en torno al 0. Sin embargo, al contrario de lo que suponíamos, la varianza parece aumentar a medida que aumenta el valor de $\hat y$. Por lo tanto, no se cumple nuestro supuesto de que la varianza es constante para todas las observaciones. Eso es un problema, ya que si no se cumple el supuesto de homocedasticidad, no estamos en las hipótesis del Teorema de Gauss-Markov, y por lo tanto los estimadores de los coeficientes de nuestro modelo obtenidos por Mínimos Cuadrados Ordinarios no son los mejores estimadores insesgados (es decir, no son los de mínima varianza). -->
 
-```{r bptes}
+```{r bptes, results=FALSE, echo=FALSE}
 pruebabp <- bptest(modelo3)
 
 ```
@@ -638,7 +638,7 @@ pruebabp <- bptest(modelo3)
 
 
 
-```{r qqplot1,include = TRUE, fig.width=10, fig.height=3, out.width="100%", fig.cap= "Gráfico QQ-plot"}
+```{r qqplot1, fig.width=10, fig.height=3, out.width="100%", fig.cap= "Gráfico QQ-plot", results=FALSE, echo=FALSE}
 resm3 <- as.data.frame(residuals(modelo3)) %>% rename(Residuos = "residuals(modelo3)") 
 
 
@@ -654,7 +654,7 @@ gg_qqplot(modelo3)  +
 ```
 
 
-```{r varios.graficos.res, include = TRUE, fig.width=15, fig.height=3, out.width="100%", fig.cap= "Histograma y boxplot de los residuos"}
+```{r varios.graficos.res,  fig.width=15, fig.height=3, out.width="100%", fig.cap= "Histograma y boxplot de los residuos", results=FALSE, echo=FALSE}
 
 
 grid.arrange(gg_reshist(modelo3) +
@@ -673,7 +673,7 @@ grid.arrange(gg_reshist(modelo3) +
 
 <!-- En particular en nuestros gráficos podemos observar que a grandes rasgos la distribución de los residuos se asemeja a una normal, pero las observaciones con residuos altos distorsionan esta semejanza. En el _QQ-plot_ podemos apreciar que la nube de puntos se aproxima bastante a la recta de comparación con la distribución normal teórica (de esperanza 0 y varianza $\hat\sigma^2$), excepto en las colas, donde a pesar de que se espera un distanciamiento mayor que en centro de los datos el que se presenta es muy grande. En el _boxplot_ podemos notar numerosas observaciones que se alejan del resto por lo cual podríamos considerarlas como atípicas, asi como también distinguimos que la mediana esta próxima a 0 y sin ser por los atípicos hay cierta simetría, además de haber una acumulación de observaciones en torno al 0. En cuanto al histograma presentado se puede ver que la forma de la distribución de los residuos se asemeja bastante a la de una normal, a excepción de los atípicos ya mencionados.  -->
 
-```{r test.nor}
+```{r test.nor, results=FALSE, echo=FALSE}
 
 lillie.test(residuals(modelo3))
 
@@ -687,7 +687,7 @@ shapiro.test(residuals(modelo3))
 
 <!-- La transformación de Box-Cox consiste en considerar la función de verosimilitud del salario y hayar su máximo para un conjunto dado de valores $\lambda$, generalmente entre -2 y 2. La transformación logaritmica  la utilizamos en el caso de que $\lambda = 0$.    -->
 
-```{r boxc}
+```{r boxc, results=FALSE, echo=FALSE}
 out <- MASS::boxcox(modelo3, plotit = FALSE)
 
 
@@ -700,7 +700,7 @@ intconflambda
 
 ```
 
-```{r, include=TRUE}
+```{r, results=FALSE, echo=FALSE}
 
 databoxcox <- as.data.frame(cbind(c(-0.4, -0.3, -0.2), rep(min(out$y), 3))) %>% rename(Lambda="V1", `Log-likelihood`="V2")
 
@@ -730,7 +730,7 @@ gg_boxcox(modelo3, showlambda=FALSE, lambdaSF=10) +
 
 <!-- $$\% \Delta y \simeq (100 \beta_i) \Delta x$$ -->
 
-```{r modelolog}
+```{r modelolog, results=FALSE, echo=FALSE}
 
 modelolog <- lm(log.salario ~ educ+exper+tenure+female+reg.metro+I(northcen+south)+I(trade+services)+profocc+expersq+educsq+i128+i381+i440, data = datos2[,-1])
 
@@ -741,7 +741,7 @@ summary(modelolog)
 
 
 
-```{r pvalores.modelolog}
+```{r pvalores.modelolog, results=FALSE, echo=FALSE}
 pvaloreslog <- summary(modelolog)$coefficients[2:14,4]
 
 names(pvaloreslog) <- NULL
@@ -757,7 +757,7 @@ pvaloreslog <- cbind( "Variable" = names.pvaloreslog, "p-valor" = pvaloreslog) %
 
 <!-- A continuación, se presenta la tabla de p-valores para las variables explicativas que mantenemos en el modelo:  -->
 
-```{r pvalores.modelolog2, include=TRUE, results='asis'}
+```{r pvalores.modelolog2, results=FALSE, echo=FALSE}
 
 modelolog2 <- update(modelolog, .~. -educ)
 
@@ -781,7 +781,7 @@ pvaloreslog2 %>% xtable(caption="p-valores para el modelo que explica la variaci
 <!-- ### Análisis de los supuestos -->
 <!-- Nos disponemos ahora a analizar nuevamente qué ocurre con el cumplimiento de los supuestos una vez realizada la transformación. -->
 
-```{r grafico.residuos.modelolog, include = TRUE, }
+```{r grafico.residuos.modelolog, results=FALSE, echo=FALSE}
 datosres2<- cbind(modelolog2$fitted.values, modelolog2$residuals) %>%
   as.data.frame() %>% 
   rename(residuos = "V2", ygorro = "V1")
@@ -799,14 +799,14 @@ datosres2 %>%
 
 
 
-```{r bptest.modelolog}
+```{r bptest.modelolog, results=FALSE, echo=FALSE}
 bptest(modelolog2)
 ```
 
 <!-- El gráfico de los residuos nos muestra que ahora ya no está tan marcado el patrón de la distribución que anteriormente veíamos. Notamos dos observaciones que se separan ligeramente del resto de la nube de puntos, la 128 y la 440, que son dos de las que recibieron un tratamiento especial en el modelo. El test de homocedasticidad de Breusch-Pagan nos da un p-valor de `r signif(unname(bptest(modelolog2)$p.value), 2)` nos lleva a no rechazar la hipótesis nula de que los residuos tienen igual varianza a un nivel de significación del 5%.  -->
 
 
-```{r qqplot2,include = TRUE, fig.width=10, fig.height=3, out.width="100%", fig.cap= "Gráfico QQ-plot para el modelo logarítmico"}
+```{r qqplot2, fig.width=10, fig.height=3, out.width="100%", fig.cap= "Gráfico QQ-plot para el modelo logarítmico", results=FALSE, echo=FALSE}
 
 residuoslog2 <- as.data.frame(residuals(modelolog2))
 
@@ -820,7 +820,7 @@ gg_qqplot(modelolog2)  +
 ```
 
 
-```{r varios.graficos.res2, include = TRUE, fig.width=15, fig.height=3, out.width="100%", fig.cap= "Histograma y boxplot de los residuos para el modelo logarítmico"}
+```{r varios.graficos.res2, fig.width=15, fig.height=3, out.width="100%", fig.cap= "Histograma y boxplot de los residuos para el modelo logarítmico", results=FALSE, echo=FALSE}
 
 
 grid.arrange(gg_reshist(modelolog2) +
@@ -841,7 +841,7 @@ grid.arrange(gg_reshist(modelolog2) +
 
 <!-- Efectivamente, al realizar los tests de normalidad obtenemos los siguientes p-valores: -->
 
-```{r test.norm.modelolog, include=TRUE, results='asis'}
+```{r test.norm.modelolog, results=FALSE, echo=FALSE}
 as.data.frame( cbind(c("Lilliefors (Kolmogorov-Smirnov)",
                        "Jarque–Bera ",
                        "Shapiro-Wilk "),
@@ -875,7 +875,7 @@ as.data.frame( cbind(c("Lilliefors (Kolmogorov-Smirnov)",
 <!-- Así, nos interesa conocer el valor de los coeficientes al multiplicarlos por 100. En el caso de las variables cuantitativas, ese producto nos indica la variación porcentual en el salario dado un aumento unitario en la variable explicativa, manteniendo los demás regresores constantes. En el caso de las variables categóricas, ese producto se interpreta como la variación porcentual en el salario al pertenecer a una categoría u otra de la variable, respecto de la categoría de referencia.  -->
 
 
-```{r coeficientes.modelolog}
+```{r coeficientes.modelolog, results=FALSE, echo=FALSE}
 
 parametros <- signif(summary(modelolog2)$coefficients[2:13,1], 3)
 
@@ -1041,7 +1041,7 @@ parametrosindicadoras <- parametros %>% filter(namesparametros %in% varindicador
 
 <!-- ### Selección de variables -->
 
-```{r modmul2}
+```{r modmul2, results=FALSE, echo=FALSE}
 a <- dplyr::select(datos, -c(region, rama_act, ocupacion, log.salario))
 
 modmul2 <- lm(salario~ ., data=a)         
@@ -1056,7 +1056,7 @@ summary(modmul2)
 <!-- Como planteábamos en el cuerpo del texto, inicialmente consideramos un modelo con todas las variables explicativas de la base de datos. El contraste de significación de dicho modelo nos da un p-valor próximo a cero. Para aproximarnos a la selección de aquellas que incluiremos en nuestro modelo final realizamos para cada variable su contraste de significación, a continuación presentamos una tabla con los distintos p-valores de dichos contrastes. -->
 
 
-```{r pvalores.modmul2}
+```{r pvalores.modmul2, results=FALSE, echo=FALSE}
 pvalores2 <- round(summary(modmul2)$coefficients[2:21,4], 3)
 names(pvalores2) <- NULL
 
@@ -1069,7 +1069,7 @@ pvalores2 <- cbind(names.pvalores2, pvalores2) %>% as.data.frame() %>%
 ```
 
 
-```{r muestro.pvalores.modmul2, include = TRUE, results='asis'}
+```{r muestro.pvalores.modmul2, results=FALSE, echo=FALSE}
 xtable(pvalores2, caption="Tabla de p-valores para el modelo con todas las variables.") 
 ```
 
@@ -1083,14 +1083,14 @@ xtable(pvalores2, caption="Tabla de p-valores para el modelo con todas las varia
 <!-- De todas formas, debemos tener en cuenta que todas estas conclusiones son hechas en un contexto donde consideramos cada variable en presencia de todas las demás y pueden cambiar al usar un proceso de selección secuencial, como aplicaremos a continuación. -->
 
 
-```{r modmul3, results = 'hide'}
+```{r modmul3, results=FALSE, echo=FALSE}
 modmul3 <- step(modmul2, direction = "backward", trace = 0)
 summary(modmul3)
 ```
 
 <!-- Utilizamos el método de selección _backward_ secuencial del mejor modelo, cuyo funcionamiento fue explicado en el cuerpo del texto. A continuación se presenta una tabla del modelo al cual llegamos, con las variables y sus correspondientes p-valores: -->
 
-```{r}
+```{r, results=FALSE, echo=FALSE}
 pvalores3 <- round(summary(modmul3)$coefficients[2:13,4], 3)
 names(pvalores3) <- NULL
 
@@ -1101,7 +1101,7 @@ pvalores3 <- cbind(names.pvalores3, pvalores3) %>% as.data.frame() %>%
 ```
 
 
-```{r, include=TRUE, results = 'asis'}
+```{r,  results=FALSE, echo=FALSE}
 xtable(pvalores3, caption = "Tabla de p-valores, modelo obtenido a través de método backward")
 ```
 
@@ -1114,7 +1114,7 @@ xtable(pvalores3, caption = "Tabla de p-valores, modelo obtenido a través de m�
 
 <!-- Al igual que en el modelo presentado en el cuerpo del texto, mantenemos la variable Educación a pesar de que no resulta significativa al 5%; y que el p-valor de la variable Raza al incluirla en este modelo es de 0.774, por lo cual se opta por no incluirla. -->
 
-```{r modmul4}
+```{r modmul4, results=FALSE, echo=FALSE}
 modmul4 <- update(modmul3, .~. + nonwhite)
 
 summary(modmul4)
@@ -1131,7 +1131,7 @@ summary(modmul4)
 
 <!-- Dado que suponemos que los errores tienen esperanza igual a 0 y varianza constante, si eso se cumple, esperamos que a simple vista los residuos se distribuyan aleatoriamente en torno al 0, sin seguir ningún patrón en particular. -->
 
-```{r grafico.residuos.vs.ygorro, include=TRUE, fig.cap="Gráfico de residuos en función de los valores predichos por el modelo."}
+```{r grafico.residuos.vs.ygorro, fig.cap="Gráfico de residuos en función de los valores predichos por el modelo.", results=FALSE, echo=FALSE}
 datosresiduos <- cbind(modmul3$fitted.values, modmul3$residuals) %>%
   as.data.frame() %>% 
   rename(residuos = "V2", ygorro = "V1")
@@ -1152,20 +1152,20 @@ datosresiduos %>%
 
 <!-- En este gráfico podemos ver que en principio los residuos parecen estar distribuidos en torno al 0. Sin embargo, al contrario de lo que suponíamos, la varianza parece aumentar a medida que aumenta el valor de $\hat y$. Por lo tanto, no se cumple nuestro supuesto de que la varianza es constante para todas las observaciones. -->
 
-```{r bptest}
+```{r bptest, results=FALSE, echo=FALSE}
 testhomoce <- bptest(modmul3)
 ```
 
 <!-- Para confirmar que no se cumple la homocedasticidad utilizamos el test de Breusch-Pagan tomando en cuenta todas las variables seleccionadas para el modelo. Nuestra hipótesis nula es que el modelo es homocedástico y la rechazamos dado el valor-p de `r unname(testhomoce[[4]][1])` por lo que concluiríamos que la varianza no es constante y tenemos que arreglarlo. Un posible camino a tomar para corregir esto es la transformación de Box-Cox de la variable explicada, que a su vez se usa para corregir la falla del supuesto de normalidad de los errores. Antes de llevar a cabo esta transformación veremos que pasa con dicho supuesto. -->
 
-```{r varios.graficos.residuos.modmul3, include=TRUE, fig.width=10, fig.height=3, out.width="100%", fig.cap="Gráfico QQ Plot."}
+```{r varios.graficos.residuos.modmul3, fig.width=10, fig.height=3, out.width="100%", fig.cap="Gráfico QQ Plot.", results=FALSE, echo=FALSE}
 residuosm3 <- as.data.frame(residuals(modmul3))
 
 gg_qqplot(modmul3) + xlab("Cuantiles Teóricos") +ylab("Residuos Estandarizados") + ggtitle(NULL) + theme(axis.text = element_text(size=12), axis.title = element_text(size=15))
 ```
 
 
-```{r qqplot.modmul3, include=TRUE, fig.width=15, fig.height=3, out.width="100%", fig.cap="Histograma y boxplots de los residuos."}
+```{r qqplot.modmul3,  fig.width=15, fig.height=3, out.width="100%", fig.cap="Histograma y boxplots de los residuos.", results=FALSE, echo=FALSE}
 grid.arrange(gg_reshist(modmul3) +
                xlab("Residuos") +
                ylab("Cantidad de observaciones") +
@@ -1181,7 +1181,7 @@ grid.arrange(gg_reshist(modmul3) +
 
 <!-- En nuestros gráficos podemos observar que la distribución de los residuos se asemeja bastante a una normal, pero existen observaciones con valores altos de los residuos distorsionan esta semejanza. -->
 
-```{r test.norm}
+```{r test.norm, results=FALSE, echo=FALSE}
 
 klillie <- lillie.test(residuals(modmul3))
 
@@ -1195,7 +1195,7 @@ shapiro <- shapiro.test(residuals(modmul3))
 
 <!-- La transformación de Box-Cox consiste en considerar la función de verosimilitud del salario y hayar su máximo para un conjunto dado de valores $\lambda$, generalmente entre -2 y 2. La transformación logaritmica (que sugiere el modelo de Mincer) la utilizamos en el caso de que $\lambda = 0$.    -->
 
-```{r boxcox, include=TRUE, fig.cap="Gráfico de la transformación de boxcox, con intervalo de confianza para el valor maximo de lambda.", out.width="75%"}
+```{r boxcox, fig.cap="Gráfico de la transformación de boxcox, con intervalo de confianza para el valor maximo de lambda.", out.width="75%", results=FALSE, echo=FALSE}
 out <- MASS::boxcox(modmul3, plotit = FALSE)
 
 
@@ -1215,7 +1215,7 @@ gg_boxcox(modmul3, showlambda=FALSE, lambdaSF=10) +
 
 
 
-```{r modlog}
+```{r modlog, results=FALSE, echo=FALSE}
 modlog <- lm(log.salario ~ exper+tenure+female+reg.metro+northcen+south+trade+services+profocc+expersq+educsq,data=datos)
 
 summary(modlog)
@@ -1224,7 +1224,7 @@ summary(modlog)
 
 <!-- Nos disponemos ahora a analizar nuevamente qué ocurre con los supuestos una vez realizada la transformación. -->
 
-```{r grafico.residuos.modlog, include = TRUE, fig.cap="Gráfico de residuos en función de los valores predichos para el modelo logarítmico."}
+```{r grafico.residuos.modlog, fig.cap="Gráfico de residuos en función de los valores predichos para el modelo logarítmico.", results=FALSE, echo=FALSE}
 datosresiduos2<- cbind(modlog$fitted.values, modlog$residuals) %>%
   as.data.frame() %>% 
   rename(residuos = "V2", ygorro = "V1")
@@ -1241,7 +1241,7 @@ datosresiduos2 %>%
 
 ```
 
-```{r bptest.log}
+```{r bptest.log, results=FALSE, echo=FALSE}
 which(datosresiduos2$residuos == min(datosresiduos2$residuos))
 
 testhomocelog <- bptest(modlog)
@@ -1253,14 +1253,14 @@ testhomocelog
 
 
 
-```{r varios.graficos.residuos, include=TRUE, fig.width=10, fig.height=3, out.width="100%", fig.cap="Gráfico QQ-Plot para el modelo logarítmico."}
+```{r varios.graficos.residuos, fig.width=10, fig.height=3, out.width="100%", fig.cap="Gráfico QQ-Plot para el modelo logarítmico.", results=FALSE, echo=FALSE}
 residuoslog <- as.data.frame(residuals(modlog))
 
 gg_qqplot(modlog) + xlab("Cuantiles Teóricos") +ylab("Residuos Estandarizados") + ggtitle(NULL) + theme(axis.text = element_text(size=12), axis.title = element_text(size=15))
 ```
 
 
-```{r qqplot, include=TRUE, fig.width=15, fig.height=3, out.width="100%", fig.cap="Histograma y boxplots de los residuos para el modelo logarítmico."}
+```{r qqplot,  fig.width=15, fig.height=3, out.width="100%", fig.cap="Histograma y boxplots de los residuos para el modelo logarítmico.", results=FALSE, echo=FALSE}
 grid.arrange(gg_reshist(modlog) +
                xlab("Residuos") +
                ylab("Cantidad de observaciones") +
@@ -1275,7 +1275,7 @@ grid.arrange(gg_reshist(modlog) +
 ```
 
 
-```{r test.norm.log}
+```{r test.norm.log, results=FALSE, echo=FALSE}
 klillie2 <- lillie.test(residuals(modlog))
 
 jarquebera2 <- jarque.bera.test(residuals(modlog))
@@ -1295,7 +1295,7 @@ shapiro2 <- shapiro.test(residuals(modlog))
 
 <!-- Realizando nuevamente el test de Bonferroni, encontramos que no existen más outliers con cambio en media, según el resultado de este test. En este punto, a modo meramente exploratorio, optamos por eliminar sistemáticamente observaciones de la base en una en una de acuerdo al valor absoluto de su residuo r-student (eliminamos el que tenga valor más alto), y en cada paso realizando los tests de homocedasticidad y normalidad. Encontramos que aún eliminando muchos residuos, los tests no nos dan un resultado favorable de que se cumplan los supuestos, por lo cual optamos por ir por otro camino. -->
 
-```{r, include=TRUE, results='asis'}
+```{r, results=FALSE, echo=FALSE}
 resstudent <- head(sort(abs(rstudent(modlog)), decreasing=TRUE))[2:6]
 names.res.student <- names(resstudent)
 names(resstudent) <- NULL
@@ -1305,7 +1305,7 @@ cbind(`Observación` = names.res.student, `Residuo R-Student` = round(resstudent
 
 <!-- En el cuadro anterior se puede apreciar las observaciones con mayor residuo r-studentizado, una vez eliminada la observación 24. Basándonos en ello, nos dispusimos a hacer algo diferente: en vez de eliminar observaciones de la base, les dimos un tratamiento especial, creando una variable indicadora para cada una de ellas que representara un salto en media para esa observación. Hicimos esto para las 3 observaciones con mayor residuo r-studentizado en valor absoluto: las 440, 128 y 381. -->
 
-```{r eliminacion, include=TRUE, results='asis'}
+```{r eliminacion,  results=FALSE, echo=FALSE}
 
 dummy2 <- c(rep(0, 1, 526))
 dummy2[128] <- 1
@@ -1341,7 +1341,7 @@ cbind("Test realizado"=c("Breusch-Pagan", "Lilliefors", "Jarque-Bera", "Shapiro-
 <!-- Optamos ahora por realizar toda la construcción del modelo desde el principio, porque creemos que la presencia de estas nuevas indicadoras puede afectar los tests de significación realizados. Esto se puede encontrar en el cuerpo del texto. -->
 
 
-```{r observaciones.atipicas}
+```{r observaciones.atipicas, results=FALSE, echo=FALSE}
 outlierTest(modlog) #La obs 24 es outlier
 
 lillie.test(residuals(modlog)) #0.02785
@@ -1447,7 +1447,7 @@ summary(modlog6)$adj.r.sq #0.5568825
 
 
 
-```{r tratamiento.atipicas}
+```{r tratamiento.atipicas, results=FALSE, echo=FALSE}
 # dummy <- c(rep(0, 1, 526))
 #  dummy[24]=1
 #  datos$i24 <- dummy
@@ -1513,7 +1513,7 @@ which.min(ultimomod2$fitted.values)
 
 ## Anexo 2: Gráficos de dispersión del salario para las distintas regiones
 
-```{r, fig.cap="Gráficos de dispersión del salario en función de los años de educación, para cada región.", include=TRUE}
+```{r, fig.cap="Gráficos de dispersión del salario en función de los años de educación, para cada región.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(educ, salario)) + 
   geom_point() +
@@ -1527,7 +1527,7 @@ datos %>%
 
 
 
-```{r, fig.cap="Gráficos de dispersión del salario en función de la experiencia, para cada región.", include=TRUE}
+```{r, fig.cap="Gráficos de dispersión del salario en función de la experiencia, para cada región.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(exper, salario)) + 
   geom_point() +
@@ -1536,7 +1536,7 @@ datos %>%
 ```
 <!-- En este caso, podemos observar que para las distintas regiones, no cambia la dispersión de los datos del salario en función de los años de experiencia. La única diferencia que se podría llegar a apreciar es que para la región sur, la pendiente de la recta de ajuste parece ser negativa, mientras que para las demás regiones parece ser positiva. -->
 
-```{r, fig.cap="Gráficos de dispersión del salario en función de los años en el empleo, para cada región.", include=TRUE}
+```{r, fig.cap="Gráficos de dispersión del salario en función de los años en el empleo, para cada región.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(tenure, salario)) + 
   geom_point() +
@@ -1551,7 +1551,7 @@ datos %>%
 ## Anexo 3: 
 <!-- Modelos lineales simples -->
 
-```{r, results='hide'}
+```{r, results='hide', results=FALSE, echo=FALSE}
 ## Salario - Años de empleo previos (antigüedad)
 modelo.edu <- lm(salario~educ, data=datos)
 summary(modelo.edu)
@@ -1569,7 +1569,7 @@ summary(modelo.anios)
 ## Anexo 4: 
 <!-- Gráficos de regresión lineal simples -->
 <!-- Para comenzar, decidimos construir un gráfico de dispersión del salario en función de nuestras distintas variables explicativas: educación, experiencia, y años en el empleo. Además, le agregamos una recta de ajuste lineal -->
-```{r, fig.cap="Gráfico de dispersión del salario en función de la educación, con recta de ajuste lineal.", include=TRUE}
+```{r, fig.cap="Gráfico de dispersión del salario en función de la educación, con recta de ajuste lineal.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(educ, salario)) + 
   geom_smooth(method = "lm") +
@@ -1578,7 +1578,7 @@ datos %>%
 ```
 
 
-```{r, fig.cap="Gráfico de dispersión del salario en función de la experiencia, con recta de ajuste lineal.", include=TRUE}
+```{r, fig.cap="Gráfico de dispersión del salario en función de la experiencia, con recta de ajuste lineal.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(exper, salario)) + 
   geom_smooth(method = "lm") +
@@ -1587,7 +1587,7 @@ datos %>%
 ```
 
 
-```{r,  fig.cap="Gráfico de dispersión del salario en función de los años en el empleo, con recta de ajuste lineal.", include=TRUE}
+```{r,  fig.cap="Gráfico de dispersión del salario en función de los años en el empleo, con recta de ajuste lineal.", results=FALSE, echo=FALSE}
 datos %>% 
   ggplot(aes(tenure, salario)) + 
   geom_smooth(method = "lm") +
@@ -1613,5 +1613,5 @@ datos %>%
 
 <!-- * Income and poverty in the United States: 2017. Fontenot, Kayla et al. (2018). *[Link](https://www.census.gov/content/dam/Census/library/publications/2018/demo/p60-263.pdf)*. -->
 <!-- * The “Mincer Equation” Thirty Years after Schooling, Experience, and Earnings. Lemieux, Thomas. (2006). *[Link](https://economics.ubc.ca/files/2013/05/pdf_paper_thomas-lemieux-mincer-equation.pdf)*. -->
-* Introducción a la econometría: Un enfoque moderno. Wooldrige, Jeffrey. (2009).
-<!-- * Materiales del curso 2020 de Modelos Lineales -->
+<!-- * * Introducción a la econometría: Un enfoque moderno. Wooldrige, Jeffrey. (2009).
+ Materiales del curso 2020 de Modelos Lineales -->
