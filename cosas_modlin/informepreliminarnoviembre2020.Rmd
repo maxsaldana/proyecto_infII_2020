@@ -37,17 +37,11 @@ library(janitor)
 library(xtable)
 library(gridExtra)
 library(scales)
-library(regclass)
-library(nortest)
-library(car)
-library(tseries)
-library(faraway)
+library(rstanarm)
+library(bayesplot)
 
 #No cargamos el paquete MASS porque nos tapa la función select de tidyverse
 
-library(lindia)
-
-library(lmtest)
 ```
 
 \title{Modelización lineal del salario} 
@@ -313,6 +307,11 @@ datos2$i440 <- dummy3
 
 datos2 <- datos2[-24,]
 
+datos2 <- datos2 %>% 
+  mutate(
+    norsur = ifelse(northcen == 1 | south == 1, 1, 0), 
+    comserv = ifelse(trade == 1 | services == 1, 1, 0)
+    )
 
 modelo2 <- lm(salario ~., data = datos2[,-19])         
 
@@ -360,6 +359,18 @@ Lo que nos dejó con un modelo de la forma.
 
 
 
+```{r modelo inicial}
+
+mod_bayes1 <- stan_glm(salario ~ educ + exper + tenure + nonwhite + female + married + numdep + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2,
+                    family = gaussian(link = "identity"),
+                    prior_intercept = normal(0,10),
+                    prior = normal(0,10),
+                    prior_aux = exponential(1),
+                    seed = 12345)
+
+#elegir que tipo de summary hacemos
+summary(mod_bayes1)
+```
 
 
 
