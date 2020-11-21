@@ -357,15 +357,16 @@ Lo que nos dejó con un modelo de la forma.
 
 ```{r modelo inicial}
 
-mod_bayes1 <- stan_glm(salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2,
+mod_bayes2 <- stan_glm(salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2,
                     family = gaussian(link = "identity"),
                     prior_intercept = normal(0,10),
                     prior = normal(0,10),
                     prior_aux = exponential(1),
                     seed = 12345)
 modcom <- lm(salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2)
+
 #elegir que tipo de summary hacemos
-summary(mod_bayes1)
+c=summary(mod_bayes1)
 
 mod_bayes1$stanfit
 mod_bayes1$coefficients
@@ -380,10 +381,38 @@ b=pp_check(mod_bayes1, plotfun = "stat", stat = "median")
 
 ppc_dens_overlay(kidiq$kid_score,pred)#Sobreposicion de las yrep con los datos originales
 
+
 ```
 
 
+```{r modelo inicial}
 
+mod_bayes1 <- stan_glm(salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2,
+                    family = gaussian(link = "identity"),
+                    prior_intercept = normal(0,10),
+                    prior_aux = exponential(1),
+                    seed = 12345)
+modcom <- lm(salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , data = datos2)
+
+#elegir que tipo de summary hacemos
+d=summary(mod_bayes1)
+d
+
+mod_bayes1$stanfit
+mod_bayes1$coefficients
+mcmc_trace(mod_bayes1)
+mcmc_trace(mod_bayes1,pars="educ")
+
+pred<-posterior_predict(mod_bayes1,draws = 100)
+
+a=pp_check(mod_bayes1, plotfun = "stat", stat = "mean")
+
+b=pp_check(mod_bayes1, plotfun = "stat", stat = "median")
+
+ppc_dens_overlay(kidiq$kid_score,pred)#Sobreposicion de las yrep con los datos originales
+
+
+```
 
 
 
