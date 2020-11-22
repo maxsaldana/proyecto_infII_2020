@@ -283,41 +283,10 @@ Con el resto de las variables econtramos que las proporciones entre las categor�
 
 * Para la variable Raza hay un `r percent(propwhite[2],accuracy = 0.01)` de personas no blancas  y  `r percent(propwhite[1], accuracy = 0.01)` blancas. El resultado es de esperarse dado que las personas no blancas son una minoría en los Estados Unidos.
 
+# Métodos
 
-# Presentación del modelo
+## Presentación del modelo
 
-
-
-
-
-```{r datosmod, results=FALSE, echo=FALSE }
-datos2 <- dplyr::select(datos, -c(region, rama_act, ocupacion)) 
-
-
-
-dummy2 <- c(rep(0, 1, 526))
-dummy2[128] <- 1
-datos2$i128 <- dummy2
-
-dummy4 <- c(rep(0, 1, 526))
-dummy4[381] <- 1
-datos2$i381 <- dummy4
-
-
-
-dummy3 <- c(rep(0, 1, 526))
-dummy3[440] <- 1
-datos2$i440 <- dummy3
-
-datos2 <- datos2[-24,]
-
-datos2 <- datos2 %>% 
-  mutate(
-    norsur = ifelse(northcen == 1 | south == 1, 1, 0), 
-    comserv = ifelse(trade == 1 | services == 1, 1, 0)
-    )
-
-```
 
 Vamos a plantear un modelo de la forma
 $$log(Y) =  X\beta + \varepsilon$$
@@ -358,12 +327,57 @@ Lo que nos dejó con un modelo de la forma.
  $$log(y_t) =  x_t'\beta + \Delta_iz_t + \varepsilon_t$$
 
 
+## Estimación del modelo 
+
+La estimación de los parámetros del modelo se realizará desde un enfoque bayesiano, es decir, se les asignará una distribución previa para cuantificar la incertidumbre que se tiene sobre sus valores y utilizando los datos se obtendrá una distribución posterior. Se diferencia del caso de un modelo lineal clásico dado que en este último se trabaja con la distribución en el muestreo de lo estimadores de los parámetros y no con la distribución de los parámetros en si.
+
+Realizamos la estimación mediante simulaciones Monte Carlo basadas en cadenas de Markov (son simulaciones en las cuales cada resultado depende únicamente del anterior). Para la estimación de cada uno de los parámetros se plantean 4 cadenas iniciadas en valores distintos, cada una con 4000 iteraciones. A partir de estos valores se avanza iterativamente hasta  llegar a los 4000 valores simulados, de los cuales los primeros 2000 se usan como "calentamiento" para desligar las simulaciones de los valores iniciales. 
+
+Se desea que las cadenas converjan a la distribución posterior de los parámetros, y aunque nunca podemos asegurar que se da al ser un concepto teórico podemos evaluar si hay indicios de que no se da. Dos métodos para evaluar la convergencia  son el $\hat{R}$ y el $\hat{n}_{eff}$. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de la posterior es explicada por la variabilidad dentro de las cadenas.  
+
+
+# Resultados
+
+```{r datosmod, results=FALSE, echo=FALSE }
+datos2 <- dplyr::select(datos, -c(region, rama_act, ocupacion)) 
+
+
+
+dummy2 <- c(rep(0, 1, 526))
+dummy2[128] <- 1
+datos2$i128 <- dummy2
+
+dummy4 <- c(rep(0, 1, 526))
+dummy4[381] <- 1
+datos2$i381 <- dummy4
+
+
+
+dummy3 <- c(rep(0, 1, 526))
+dummy3[440] <- 1
+datos2$i440 <- dummy3
+
+datos2 <- datos2[-24,]
+
+datos2 <- datos2 %>% 
+  mutate(
+    norsur = ifelse(northcen == 1 | south == 1, 1, 0), 
+    comserv = ifelse(trade == 1 | services == 1, 1, 0)
+    )
+
+```
+
+
+
+
+
+
 ```{r modelo bayes}
 mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , 
                        data = datos2,
                     family = gaussian(link = "identity"),
                     seed = 12345,
-                    )
+                    iter = 4000)
 
 summary(mod_bayes)
 
@@ -400,7 +414,7 @@ hist(modclas$residuals, breaks = 50)
 
 
 
-
+# Conclusión 
 
 
 
