@@ -32,15 +32,19 @@ options(xtable.comment=FALSE,
 
 
 ```{r, include = FALSE}
-library(tidyverse)
+library(dplyr)
+library(readr)
+library(forcats)
+library(ggplot2)
 library(janitor)
+
 library(xtable)
-library(gridExtra)
 library(scales)
+
 library(rstanarm)
 library(bayesplot)
 
-#No cargamos el paquete MASS porque nos tapa la función select de tidyverse
+
 
 ```
 
@@ -93,7 +97,7 @@ datos <- datos %>%
 Inicialmente modificamos la base para llevarla a una forma que nos parecía más práctica de trabajar, agrupando variables que refieren a una sola característica de los datos y estaban en una forma binaria. Estas variables son la Región, separada en la base original en Norte, Sur y Oeste; la Rama de Actividad, separada en Construcción, Servicios y Comercio; y la Ocupación, separada en Profesional, Administrativos y Servicios. Luego de consultar a las docentes de Modelos Lineales optamos por no descartar las variables indicadoras ya que nos permiten su utilización a la hora de aplicar un modelo lineal multivariado y a su vez mantenemos la variable agrupada para poder usarla a la hora de manipular y graficar datos.
 
 ```{r, results=FALSE, echo=FALSE}
-#datos finales
+#mod datos 
 datos <- datos %>% 
   mutate(
     region = as.factor(case_when(
@@ -359,22 +363,22 @@ mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur
                        data = datos2,
                     family = gaussian(link = "identity"),
                     seed = 12345,
-                    chains = 12)
+                    )
 
-summary(mod_bayes3)
+summary(mod_bayes)
 
-prior_summary(mod_bayes3)
+prior_summary(mod_bayes)
 
 
 
-mod_bayes3$stanfit
+mod_bayes$stanfit
 mod_bayes$coefficients
-mcmc_trace(mod_bayes3)
-mcmc_trace(mod_bayes3,pars="i440")
+mcmc_trace(mod_bayes)
+mcmc_trace(mod_bayes,pars="i440")
 
-pred<-posterior_predict(mod_bayes3,draws = 100)
+pred<-posterior_predict(mod_bayes,draws = 100)
 
-a=pp_check(mod_bayes3, plotfun = "stat", stat = "mean")
+a=pp_check(mod_bayes, plotfun = "stat", stat = "mean")
 
 b=pp_check(mod_bayes, plotfun = "stat", stat = "median")
 b
@@ -382,6 +386,14 @@ b
 
 
 
+```{r mod clasico}
+
+modclas <- lm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440, data = datos2)
+
+
+
+hist(modclas$residuals, breaks = 50)
+```
 
 
 
