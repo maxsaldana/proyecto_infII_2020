@@ -331,9 +331,22 @@ Lo que nos dejó con un modelo de la forma.
 
 La estimación de los parámetros del modelo se realizará desde un enfoque bayesiano, es decir, se les asignará una distribución previa para cuantificar la incertidumbre que se tiene sobre sus valores y utilizando los datos se obtendrá una distribución posterior. Se diferencia del caso de un modelo lineal clásico dado que en este último se trabaja con la distribución en el muestreo de lo estimadores de los parámetros y no con la distribución de los parámetros en si.
 
-Realizamos la estimación mediante simulaciones Monte Carlo basadas en cadenas de Markov (son simulaciones en las cuales cada resultado depende únicamente del anterior). Para la estimación de cada uno de los parámetros se plantean 4 cadenas iniciadas en valores distintos, cada una con 4000 iteraciones. A partir de estos valores se avanza iterativamente hasta  llegar a los 4000 valores simulados, de los cuales los primeros 2000 se usan como "calentamiento" para desligar las simulaciones de los valores iniciales. 
+Realizamos la estimación mediante simulaciones Monte Carlo basadas en cadenas de Markov (MCMC), simulaciones en las cuales cada resultado depende únicamente del anterior. Para la estimación de cada uno de los parámetros se plantean 4 cadenas iniciadas en valores distintos, cada una con 4000 iteraciones. A partir de estos valores se avanza iterativamente hasta  llegar a los 4000 valores simulados, de los cuales los primeros 2000 se usan como "calentamiento" para desligar las simulaciones de los valores iniciales. 
 
-Se desea que las cadenas converjan a la distribución posterior de los parámetros, y aunque nunca podemos asegurar que se da al ser un concepto teórico podemos evaluar si hay indicios de que no se da. Dos métodos para evaluar la convergencia  son el $\hat{R}$ y el $\hat{n}_{eff}$. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de la posterior es explicada por la variabilidad dentro de las cadenas.  
+Se desea que las cadenas converjan a la distribución posterior de los parámetros, y aunque nunca podemos asegurar que se da al ser un concepto teórico podemos evaluar si hay indicios de que no se da. Dos métodos para evaluar la convergencia  son el $\hat{R}$ y el $\hat{n}_{eff}$. 
+
+ $$\hat{R} = \sqrt{\frac{Var^+(\theta | y)}{W}} $$
+ 
+Donde:
+
+$$Var^+(\theta | y) = \frac{n-1}{n}W + \frac{1}{n} B $$
+
+En la expresión anterior n indica el número de iteraciones en cada cadena, W la media de las varianzas de las cadenas y B la varianza de las medias de las cadenas. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de las simulaciones es explicada por la variabilidad dentro de las cadenas.
+
+Por otro lado definimos el indicador:
+
+$$n_{eff} = \frac{n.m}{1 + 2 \sum^{\infty}_{k = 1} \rho_k}$$
+Donde $n$ es el número de iteraciones, $m$ es el número de cadenas y $\rho_k$ la autocorrelación $k-ésima$. Al estimar $\sum^{\infty}_{k = 1} \rho_k$ conseguimos $\hat{n}_{eff}$. Este indicador es una estimación de la cantidad de muestras independientes equivalentes a las del método MCMC. 
 
 
 # Resultados
