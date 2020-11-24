@@ -341,15 +341,16 @@ Donde:
 
 $$Var^+(\theta | y) = \frac{n-1}{n}W + \frac{1}{n} B $$
 
-En la expresión anterior n indica el número de iteraciones en cada cadena, W la media de las varianzas de las cadenas y B la varianza de las medias de las cadenas. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de las simulaciones es explicada por la variabilidad dentro de las cadenas.
+En la expresión anterior n indica el número de iteraciones en cada cadena, W la media de las distintas varianzas dentro de las cadenas y B la varianza entre las medias de las cadenas. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de las simulaciones es explicada por la variabilidad dentro de las cadenas.
 
 Por otro lado definimos el indicador:
 
-$$n_{eff} = \frac{n.m}{1 + 2 \sum^{\infty}_{k = 1} \rho_k}$$
-Donde $n$ es el número de iteraciones, $m$ es el número de cadenas y $\rho_k$ la autocorrelación $k-ésima$. Al estimar $\sum^{\infty}_{k = 1} \rho_k$ conseguimos $\hat{n}_{eff}$. Este indicador es una estimación de la cantidad de muestras independientes equivalentes a las del método MCMC. 
+$$n_{\text{eff}} = \frac{n.m}{1 + 2 \sum^{\infty}_{k = 1} \rho_k}$$
+Donde $n$ es el número de iteraciones, $m$ es el número de cadenas y $\rho_k$ la autocorrelación $k-ésima$. Al estimar $\sum^{\infty}_{k = 1} \rho_k$ conseguimos $\hat{n}_{\text{eff}}$. Este indicador es una estimación de la cantidad de muestras independientes equivalentes a las del método MCMC. 
 
 
 # Resultados
+
 
 ```{r datosmod, results=FALSE, echo=FALSE }
 datos2 <- dplyr::select(datos, -c(region, rama_act, ocupacion)) 
@@ -385,31 +386,145 @@ datos2 <- datos2 %>%
 
 
 
-```{r modelo bayes}
-mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440  , 
-                       data = datos2,
-                    family = gaussian(link = "identity"),
-                    seed = 12345,
-                    iter = 4000)
-
-summary(mod_bayes)
-
-prior_summary(mod_bayes)
+```{r modelo bayes y clasico, include=FALSE}
+mod_clasico <- lm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440, data=datos2)
 
 
+mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
+                      data = datos2,
+                      family = gaussian(link = "identity"),
+                      seed = 12345,
+                      iter = 4000)
 
-mod_bayes$stanfit
-mod_bayes$coefficients
-mcmc_trace(mod_bayes)
-mcmc_trace(mod_bayes,pars="i440")
 
+#summary(mod_bayes)
+
+#prior_summary(mod_bayes) #Información de las previas, informadas y ajustadas, para el intercepto, los coeficientes y sigma.
+
+#summary.stanreg(mod_bayes)
+
+parametros.clasicos <- summary(mod_clasico)$coefficients[,1]
+
+summary.mod <- as.data.frame(mod_bayes$stanfit)
+# parametros.bayesianos <- rep(0, 16)
+# for (i in 1:16) {
+#   parametros.bayesianos[i] <- mean(summary.mod[,i])
+# }
+#names(parametros.bayesianos) <- names(summary.mod)
+parametros.bayesianos <- mod_bayes$coefficients
+
+intervalos.posteriores <- posterior_interval(mod_bayes, prob=0.95)
+
+notacion.numerica <- function(x) {format(x, scientific=FALSE)}
+redondear.6 <- function(x) {(round(as.numeric(x), 6))}
+```
+
+
+
+```{r cuadro parametros, include=TRUE, results='asis', message=FALSE}
+cbind("Parámetro"=c("Intercepto", 'Experiencia', 'Antigüedad', 'Sexo', 'Región Metropolitana', 'Norte/Sur', 'Comercio/Servicios', 'Ocupación Profesional', 'Exp. al cuadrado', 'Educ. al cuadrado', 'Indic. 128', 'Indic. 381', 'Indic. 440'),
+      "Parámetros clásicos"= parametros.clasicos,
+      "Parámetros bayesianos estimados"=parametros.bayesianos[1:13],
+      "Cuantil 2.5%"=round(intervalos.posteriores[1:13,1], 4),
+      "Cuantil 97.5%"=round(intervalos.posteriores[1:13,2], 4)
+      ) %>%
+  as.data.frame() %>%
+  mutate_at(vars(2,3), redondear.6) %>%
+  xtable(digits = 6,
+         caption="Cuadro comparativo entre las estimaciones de los parámetros realizados a través de inferencia clásica y bayesiana.")
+  
+
+```
+
+
+En el cuadro anterior podemos observar los resultados de la estimación de los coeficientes de las variables explicativas, tanto del modelo clásico por medio de mínimos cuadrados ordinarios, como del modelo bayesiano a través de estimación MCMC. Podemos ver que la diferencia es mínima entre ambas estimaciones, siendo los resultados iguales hasta al menos el segundo dígito después de la coma en todos los casos.
+
+Además, planteamos para cada parámetro el intervalo de credibilidad al 95%, y en todos los casos vemos que tanto el parámetro estimado mediante simulación bayesiana como el parámetro estimado mediante inferencia clásica están comprendidos en dicho intervalo.
+
+
+## Análisis de convergencia
+
+En primer lugar, nos valdremos de distintos indicadores y visualizaciones que nos permitirán disgnósticar si existe o no falta de convergencia en nuestro modelo.
+
+
+
+```{r graficos cadenas, include=TRUE, fig.cap="Gráficos que muestran la evolución de las cadenas para dos variables explicativas, el intercepto y la experiencia.", fig.asp=0.25, out.width="200%"}
+gridExtra::grid.arrange(
+  mcmc_trace(mod_bayes,pars="(Intercept)"),
+  mcmc_trace(mod_bayes,pars="exper"),
+  ncol=2
+  )
+```
+
+Para observar el comportamiento de las cadenas usadas en la estimación, comenzamos con gráficos que nos permiten observar la evolución de las mismas a lo largo de las iteraciones. En los mismos podemos ver que las cadenas para los parámetros del intercepto y de la experiencia se mantienen en torno a un cierto valor en cada caso, lo cual sugiere que no hay falta de convergencia. El comportamiento para los demás parámetros es similar, presentándose estos dos casos en el documento de forma de que sirvan de visualización.
+
+
+Además de las visualizaciones, nos valemos de dos medidas que nos permiten identificar la falta de convergencia o indicios de lo contrario: el $\hat R$ y el $\hat{n}_{\text{eff}}$.
+
+```{r rhat, include=FALSE}
+rhat <- summary(mod_bayes) %>% as.data.frame() %>% select(Rhat)
+neff <- summary(mod_bayes) %>% as.data.frame() %>% select(n_eff)
+
+print.xtable(
+  cbind("Parámetro"=c("Intercepto", 'Experiencia', 'Antigüedad', 'Sexo', 'Región Metropolitana',
+                      'Norte/Sur', 'Comercio/Servicios', 'Ocupación Profesional', 'Exp. al cuadrado',
+                      'Educ. al cuadrado', 'Indic. 128', 'Indic. 381', 'Indic. 440'),
+        "Rhat"=redondear.6(rhat[1:13,]),
+        "neff" = redondear.6(neff[1:13,])
+        ) %>% xtable(caption="Indicadores sobre convergencia para los distintos parámetros del modelo bayesiano."),
+  include.rownames=FALSE)
+```
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lll}
+  \hline
+Parámetro & $\hat R$ & $n_\text{eff}$ \\ 
+  \hline
+Intercepto & 0.999962 & 8743 \\ 
+  Experiencia & 0.999883 & 6048 \\ 
+  Antigüedad & 0.999631 & 9652 \\ 
+  Sexo & 0.999988 & 10735 \\ 
+  Región Metropolitana & 1.000015 & 10467 \\ 
+  Norte/Sur & 0.999736 & 10541 \\ 
+  Comercio/Servicios & 0.999939 & 10101 \\ 
+  Ocupación Profesional & 0.999729 & 8976 \\ 
+  Exp. al cuadrado & 0.999974 & 6128 \\ 
+  Educ. al cuadrado & 1.000216 & 8528 \\ 
+  Indic. 128 & 0.999891 & 10472 \\ 
+  Indic. 381 & 0.999971 & 11287 \\ 
+  Indic. 440 & 0.999742 & 10776 \\ 
+   \hline
+\end{tabular}
+\caption{Indicadores sobre convergencia para los distintos parámetros del modelo bayesiano.} 
+\end{table}
+
+En este cuadro, podemos ver que para todos los parámetos del modelo bayesiano (del intercepto y las variables explicativas) el valor del $\hat{R}$ está en torno a 1 pero sin superar 1.1, lo cual sirve como regla empírica para desestimar indicios de falta de convergencia. En cuanto al $n_\text{eff}$, los valores son altos en comparación con las 4000 iteraciones dependientes realizadas, del órden de 6000, 8000 y hasta 10000 simulaciones independientes.
+
+
+## Réplicas de los datos simulados
+
+A continuación, veremos la capacidad predictiva de nuestro modelo, a través de la comparación de estadísticos aplicados tanto a nuestros datos originales como a una muestra de datos simulados.
+
+
+```{r comparacion datos originales simulados, include=TRUE, fig.cap="Comparación de estadísticos entre los datos originales y los simulados.", fig.asp=0.25, out.width="200%"}
 pred<-posterior_predict(mod_bayes,draws = 100)
 
-a=pp_check(mod_bayes, plotfun = "stat", stat = "mean")
-
-b=pp_check(mod_bayes, plotfun = "stat", stat = "median")
-b
+gridExtra::grid.arrange(pp_check(mod_bayes, plotfun = "stat", stat = "mean"),
+                        pp_check(mod_bayes, plotfun = "stat", stat = "median"),
+                        ncol=2)
 ```
+
+En la visualización anterior, se presentan dos visualizaciones del histograma del logaritmo del salario, en base a las 100 simulaciones realizadas con nuestro modelo lineal bayesiano.
+
+
+En primer lugar, vemos que la media de los datos originales, representada con una línea azul oscura, se ubica sobre los valores centrales del histograma, donde se dan los intervalos con mayor frecuencia relativa. Esto quiere decir que nuestros datos simulados son similares en media a nuestros datos originales. No sucede así con la mediana, que se distribuye de forma similar a la media en nuestros datos simulados contrariamente a lo que sucede en los originales, lo cual podemos ver en que la mediana original se ubica sobre los valores menores de la distribución, en lugar de la parte central como querríamos.
+
+
+
+
+
+
 
 
 
