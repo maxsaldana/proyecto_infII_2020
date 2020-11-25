@@ -4,15 +4,16 @@ author: "Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry"
 date: "Noviembre 2020"
 output:
   pdf_document:
+    ]
     toc: no
     pandoc_args: [
       "--number-sections",
       "--number-offset=1"
-    ]
 header-includes:
   - \usepackage{float}
   - \usepackage[spanish]{babel}
-
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -390,14 +391,24 @@ datos2 <- datos2 %>%
 mod_clasico <- lm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440, data=datos2)
 
 
+# mod_bayes0 <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
+#                       data = datos2,
+#                       family = gaussian(link = "identity"),
+#                       seed = 12345,
+#                       iter = 4000) #Modelo viejo
+
+
+
 mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
                       data = datos2,
-                      family = gaussian(link = "identity"),
+                      family = Gamma(link = "log"), #Probar sin el log a ver que pasa
                       seed = 12345,
                       iter = 4000)
 
+pp_check(mod_bayes, nrep=100)
 
-#summary(mod_bayes)
+
+  #summary(mod_bayes)
 
 #prior_summary(mod_bayes) #Información de las previas, informadas y ajustadas, para el intercepto, los coeficientes y sigma.
 
