@@ -4,11 +4,11 @@ author: "Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry"
 date: "Noviembre 2020"
 output:
   pdf_document:
-    ]
     toc: no
     pandoc_args: [
       "--number-sections",
       "--number-offset=1"
+    ]
 header-includes:
   - \usepackage{float}
   - \usepackage[spanish]{babel}
@@ -352,7 +352,6 @@ Donde $n$ es el número de iteraciones, $m$ es el número de cadenas y $\rho_k$ 
 
 # Resultados
 
-
 ```{r datosmod, results=FALSE, echo=FALSE }
 datos2 <- dplyr::select(datos, -c(region, rama_act, ocupacion)) 
 
@@ -383,45 +382,68 @@ datos2 <- datos2 %>%
 ```
 
 
+Retomando, el modelo a estimar es:
 
+$$log(salario) = \beta_0 + \beta_1exper + \beta_2tenure + \beta_3female + \beta_4reg.metro + \beta_5norsur + \beta_6comserv + \beta_7profocc + \beta_8expersq + \beta_9educsq \\ + \beta_{10} z_{128} + \beta_{11} z_{381}+ \beta_{12} z_{440} + u_i$$
+Inicialmente mantenemos la familia de distribuciones normales para la distribución de los errores que viene por defecto en la función _stan_glm()_ y consecuentemente las previas de los parámetros son definidas como $\beta_0 \sim Normal(1,6 ; 2,5)$ y $\beta_j \sim Normal(0 ; 2,5) \,\, \forall j = 1,...,12$. La media de $\beta_0$ es la media muestral del logaritmo de los salarios, nuestra variable dependiente. A partir de eso, los valores de los desvíos son ajustados de la siguiente forma:
+
+$$\beta_0 \sim Normal(1,6; 2,5\cdot s_y)$$
+
+$$\beta_j \sim Normal(0; 2,5\cdot s_y/s_{x_j}) \,\, \forall j = 1, \dots ,12$$
+Donde $s_y$ es el desvío del logaritmo del salario y $s_{x_j}$ es el desvío de la j-ésima variable explicativa. [^1]
+
+En este modelo inicial encontramos el problema de que al comparar las y replicadas con las originales el ajuste no era bueno debido a que los datos simulados eran simétricos a diferencia de los datos originales. Atribuimos esto a que elegimos una distribución Normal para los errores y por lo tanto también para los datos, por lo que optamos por cambiar la familia de distribuciones de los errores por la de las distribuciones Gamma, que permite captar la asimetría de la variable explicada. Las previas luego del ajuste pasan a ser ahora:
+
+$$\beta_0 \sim Normal(0; 2,5)$$
+
+$$\beta_j \sim Normal(0; 2,5/s_{x_j}) \,\, \forall j = 1, \dots ,12$$
+\underline{preguntar que hace el link log}
+
+
+```{r, echo=FALSE}
+mod_bayes0 <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
+                      data = datos2,
+                      family = gaussian(link = "identity"),
+                      seed = 12345,
+                      iter = 4000) 
+
+
+
+# mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
+#                       data = datos2,
+#                       family = Gamma(link = "log"), 
+#                       seed = 12345,
+#                       iter = 4000)
+
+mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
+                      data = datos2,
+                      family = Gamma(link = "identity"), 
+                      seed = 12345,
+                      iter = 4000)
+```
+
+```{r, fig.cap="Gráficos de las distribuciones de los valores simulados para las dos familias de errores utilizadas", fig.asp=0.25, out.width="200%"}
+gridExtra::grid.arrange(
+ pp_check(mod_bayes0, nrep = 100) + ggtitle("Familia Normal"),
+ pp_check(mod_bayes, nrep = 100) + ggtitle("Familia Gamma"),
+ ncol = 2
+)
+```
+
+Como comentamos anteriormente, podemos observar que las densidades de las $y_{rep}$ ajustan mejor a la distribución original utilizando la familia de densidades Gamma para los errores, conservando mejor la asimetría de la variable dependiente. Cabe destacar que en el caso de la familia Gamma como los valores del recorrido son positivos no se están captando aquellos valores del logaritmo del salario que resultan negativos. Aún así son pocos valores (correspondientes a salarios muy bajos) y para el resto del recorrido el modelo ajusta bien. Por otro lado como una variable aleatoria Gamma tiene recorrido en todos los reales positivos, se le asigna probabilidad positiva a valores del logaritmo del salario que no aparecen en los datos originales, por este motivo las colas derechas del conjunto de distribuciones es más larga.   
+
+
+[^1]: [Documentación del paquete _rstanarm_.](http://mc-stan.org/rstanarm/articles/priors.html)
 
 
 
 ```{r modelo bayes y clasico, include=FALSE}
 mod_clasico <- lm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440, data=datos2)
 
-
-# mod_bayes0 <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
-#                       data = datos2,
-#                       family = gaussian(link = "identity"),
-#                       seed = 12345,
-#                       iter = 4000) #Modelo viejo
-
-
-
-mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur + comserv + profocc + expersq + educsq + i128 + i381 + i440,
-                      data = datos2,
-                      family = Gamma(link = "log"), #Probar sin el log a ver que pasa
-                      seed = 12345,
-                      iter = 4000)
-
-pp_check(mod_bayes, nrep=100)
-
-
-  #summary(mod_bayes)
-
-#prior_summary(mod_bayes) #Información de las previas, informadas y ajustadas, para el intercepto, los coeficientes y sigma.
-
-#summary.stanreg(mod_bayes)
-
 parametros.clasicos <- summary(mod_clasico)$coefficients[,1]
 
 summary.mod <- as.data.frame(mod_bayes$stanfit)
-# parametros.bayesianos <- rep(0, 16)
-# for (i in 1:16) {
-#   parametros.bayesianos[i] <- mean(summary.mod[,i])
-# }
-#names(parametros.bayesianos) <- names(summary.mod)
+
 parametros.bayesianos <- mod_bayes$coefficients
 
 intervalos.posteriores <- posterior_interval(mod_bayes, prob=0.95)
