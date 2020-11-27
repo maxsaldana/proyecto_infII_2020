@@ -555,8 +555,47 @@ gridExtra::grid.arrange(pp_check(mod_bayes0, plotfun = "stat", stat = "IQR"),
 
 Ahora tomando como estadístico de referencia el rango intercuartílico, observamos que el modelo elegido lo reproduce mejor. Si tomamos en cuenta este criterio nos inclinamos por el modelo con errores normales, si consideramos el de la replica de la mediana nos inclinaríamos por el que cuenta con errores de distribución Gamma, no obstante este último no cuenta con la claridad explicativa del primero como antes mencionábamos.   
 
+## Interpretación de los coeficientes
 
-# Conclusión 
+
+```{r}
+
+pars.bx100 <- parametros.bayesianos*100
+
+nombres <- names(parametros.bayesianos)
+xtable(as.data.frame(Nombres = nombres, Parsb = unname(parametros.bayesianos), parsb100 = unname(pars.bx100)))
+
+cbind("Variable" = nombres,  "Valor del parámetro"=unname(parametros.bayesianos), "Valor por 100"=pars.bx100)  %>%  as.data.frame() %>% pivot_wider() %>% xtable(digits = 5) 
+
+```
+
+En el Cuadro **xx** presentamos los coeficientes estimados del modelo y los mismos multiplicados por 100. En primer lugar, si analizáramos el coeficiente de la experiencia por si solo, el aumento en la experiencia en un año manteniéndose todas las demás variables constantes se traduce en un aumento esperado del 3,08%. Sin embargo, notemos que también está presente la experiencia al cuadrado, por lo cual la variación porcentual del salario esperada dado un aumento unitario en la experiencia depende de los dos coeficientes. No es posible aislar el efecto de una u otra variable. Notemos también que el signo del coeficiente estimado para la experiencia al cuadrado es negativo, lo cual se interpreta como que a medida que aumenta la experiencia el crecimiento porcentual esperado en el salario será decreciente.  
+
+En el caso de la antigüedad, un aumento unitario de la variable, con las demás constantes se ve reflejado en un aumento porcentual del 1.38% del salario esperado.
+
+Por su parte un aumento en los años de educación tiene una relación cuadrática con el aumento porcentual en el salario (solo se encuentra presente la educación al cuadrado). Así, cuanto mayor sea la cantidad de años de educación el incremento porcentual del salario se irá haciendo mayor a su vez, por el contrario de como sucedió con la experiencia. De esta manera, considerando un individuo con $\mu$ años de educación un aumento unitario en esta variable supone un aumento porcentual del salario de $0,22 \times \Big((\mu+1)^2-\mu^2 \Big)$, dadas todas las demás variables constantes.  
+
+ 
+**Variables cualitativas**
+    
+Cuando nos enfrentamos al analisis de las variables cualitativas, buscamos explicar la diferencia en la variación porcentual del salario al pertenecer a una categoría u otra de la variable, respecto de la de referencia. Lo primero que observamos es que se puede hacer una distinción en los ingresos esperados dependiendo del sexo de la persona analizada. Así, una mujer tendrá un salario esperado 27.7% menor que el de un hombre, aunque ambos tengan el mismo nivel educativo, experiencia, antigüedad, trabajen en la misma área y en definitiva sean indistinguibles para todas las variables a excepción de su sexo.  
+
+Por otro lado, se aprecia una distinción entre las regiones metropolitana y no metropolitana, esperandose un salario 15.8% mayor en el primer caso, a iguales niveles de las demás variables.
+
+Analizando la influencia de la ubicación geográfica en el salario esperado, para los individuos que se encuentran en la región Norte o en la Sur se espera que perciban un salario 8.79% menor que aquellos que se encuentran en las regiones Este u Oeste (las de referencia). Esto se corresponde con la estadística descriptiva realizada en la sección _Descripción de los datos_ (Cuadro 1), en la que observábamos que el salario es similar en cuanto a su media para las regiones Norte y Sur, la cual es superior a la de las regiones Este y Oeste.
+
+En cuanto a las ramas de actividad observamos que las personas que pertenecen a las ramas Comercio y Servicios se espera que perciban un salario 23.4% menor que aquellas que están en la categoría de referencia, la que incluye la rama Construcción y otras no especificadas en la base. Ya observábamos indicios de esto en el Cuadro 2, donde la media para esas dos ramas eran visiblemente las más bajas.
+
+La ocupación profesional se distingue del resto (servicios, administrativos y otras no especificadas), siendo el salario esperado para los que pertenecen a esa ocupación un 19.5% mayor que para las demás. Nuevamente, esto es coherente con lo observado en el Cuadro 3. 
+
+
+# Conclusiones 
+
+Se llegó a un modelo lineal bayesiano válido, ya que al ser evaluado su estimación por MCMC no muestra indicios de falta de convergencia y a su vez muestra una buena capacidad de replicar los datos del logaritmo del salario originales, si bien el modelo presenta limitaciones. Entre estas se encuentra que no reproduce bien el comportamiento de la mediana del logaritmo del salario y tampoco precisamente la forma de la densidad de este último en sus máximos locales. No obstante sí reproduce bien el comportamiento de la media y el rango intercuartílico. 
+
+Encontramos que la estimación de los parámetros mediante el enfoque bayesiano daba resultados similares a los obtenido con el método de los mínimos cuadrados ordinarios.
+
+Para mejorar el modelo se podría profundizar en el uso de la familia de distribuciones Gamma para la variable explicada, con función de enlace logarítmica, así como en la interpretación de los parámetros bajo este contexto.  
 
 
 
