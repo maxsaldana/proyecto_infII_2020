@@ -8,7 +8,7 @@ output:
     pandoc_args: [
       "--number-sections",
       "--number-offset=1"
-    ]
+      ]
 header-includes:
   - \usepackage{float}
   - \usepackage[spanish]{babel}
@@ -49,9 +49,9 @@ library(bayesplot)
 
 ```
 
-\title{Modelización lineal del salario} 
- \author{Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry} 
- \date {Noviembre 2020} 
+<!-- \title{Modelización lineal del salario}  -->
+<!--  \author{Emanuelle Marsella, Maximiliano Saldaña, Lucia Tafernaberry}  -->
+<!--  \date {Noviembre 2020}  -->
 
 
 
@@ -291,7 +291,7 @@ Vamos a plantear un modelo de la forma
 $$log(Y) =  X\beta + \varepsilon$$
 donde hacemos los supuestos clásicos sobre los errores: normalidad, esperanza nula, homocedasticidad e incorrelación entre los mismos.
 
-Nuestra variable explicada es el logaritmo del salario, que se puede interpretar de la siguiente forma: dado un aumento unitario en una de las variables explicativas $x_i$, la variación porcentual del salario equivale aproximadamente a $100 \beta_i$, a niveles constantes de todas las demás variables [^1], es decir:
+Nuestra variable explicada es el logaritmo del salario, que se puede interpretar de la siguiente forma: dado un aumento unitario en una de las variables explicativas $x_i$, la variación porcentual del salario equivale aproximadamente a $100 \beta_i$, a niveles constantes de todas las demás variables[^1], es decir:
 
 [^1]: Introducción a la econometría: Un enfoque moderno. Wooldrige, Jeffrey. (2009). pág. 43.
 
@@ -327,7 +327,7 @@ Donde:
 
 $$Var^+(\theta | y) = \frac{n-1}{n}W + \frac{1}{n} B $$
 
-En la expresión anterior n indica el número de iteraciones en cada cadena, W la media de las distintas varianzas dentro de las cadenas y B la varianza entre las medias de las cadenas. Si el $\hat{R}$ se acerca a uno, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de las simulaciones es explicada por la variabilidad dentro de las cadenas.
+En la expresión anterior n indica el número de iteraciones en cada cadena, W la media de las distintas varianzas dentro de las cadenas y B la varianza entre las medias de las cadenas. Si el $\hat{R}$ se acerca a 1, eso significa que la variabilidad entre las cadenas es pequeña y por lo tanto la variabilidad de las simulaciones es explicada por la variabilidad dentro de las cadenas.
 
 Por otro lado definimos el indicador:
 
@@ -411,7 +411,7 @@ mod_bayes <- stan_glm(log.salario ~ exper + tenure + female + reg.metro + norsur
                          )
 ```
 
-En el modelo seleccionado encontramos el problema de que al comparar las $y$ replicadas con las originales el ajuste no es del todo bueno debido a que los datos simulados son simétricos a diferencia de los datos originales. Atribuimos esto a que elegimos una distribución Normal para los errores y por lo tanto también para los datos, cambiando la familia de distribuciones de los errores por la de las distribuciones Gamma, permite captar la asimetría de la variable explicada. Cabe destacar que en el caso de la familia Gamma como los valores del recorrido son positivos no se están captando aquellos valores del logaritmo del salario que resultan negativos, lo que sería una limitación del modelo. 
+En el modelo seleccionado encontramos el problema de que al comparar las $y$ replicadas con las originales el ajuste no es del todo bueno debido a que los datos simulados son simétricos, a diferencia de los datos originales. Atribuimos esto a que elegimos una distribución Normal para los errores y por lo tanto también para los datos, cambiando la familia de distribuciones de los errores por la de las distribuciones Gamma, que permite captar la asimetría de la variable explicada. Cabe destacar que en el caso de la familia Gamma como los valores del recorrido son positivos no se están captando aquellos valores del logaritmo del salario que resultan negativos, lo que sería una limitación del modelo. 
 
 Otra limitación de ambos modelos es su incapacidad de captar la forma exacta de la distribución en la zona de mayor densidad, que cuenta con dos máximos locales, ocurriendo una subestimación en el primer máximo local y una sobreestimación en el segundo. Esto es más pronunciado en el modelo elegido, el de errores Normales. La utilización de un modelo de los errores que sea una mixtura de dos distribuciones Gamma es una posible opción para enfrentarse a este problema, si bien no la desarrollamos en este proyecto.   
 
@@ -558,26 +558,29 @@ Ahora tomando como estadístico de referencia el rango intercuartílico, observa
 ## Interpretación de los coeficientes
 
 
-```{r}
+```{r, include=TRUE, results='asis'}
 
 pars.bx100 <- parametros.bayesianos*100
 
 nombres <- names(parametros.bayesianos)
-xtable(as.data.frame(Nombres = nombres, Parsb = unname(parametros.bayesianos), parsb100 = unname(pars.bx100)))
+# xtable(as.data.frame(Nombres = nombres, Parsb = unname(parametros.bayesianos), parsb100 = unname(pars.bx100)))
 
-cbind("Variable" = nombres,  "Valor del parámetro"=unname(parametros.bayesianos), "Valor por 100"=pars.bx100)  %>%  as.data.frame() %>% pivot_wider() %>% xtable(digits = 5) 
+# print.xtable(cbind("Variable" = nombres,  "Valor del parámetro"=unname(parametros.bayesianos), "Valor por 100"=pars.bx100)  %>%  as.data.frame() %>%  xtable(digits = 5),
+#   table.placement = "!h"
+#   )
+
+
+print.xtable(data.frame(nombres, unname(parametros.bayesianos)) %>% mutate(`Val. del param. por 100`=parametros.bayesianos*100) %>% rename(Variable="nombres", `Valor del parámetro`="unname.parametros.bayesianos.") %>% xtable(digits = 5), include.rownames = FALSE)
 
 ```
 
-En el Cuadro **xx** presentamos los coeficientes estimados del modelo y los mismos multiplicados por 100. En primer lugar, si analizáramos el coeficiente de la experiencia por si solo, el aumento en la experiencia en un año manteniéndose todas las demás variables constantes se traduce en un aumento esperado del 3,08%. Sin embargo, notemos que también está presente la experiencia al cuadrado, por lo cual la variación porcentual del salario esperada dado un aumento unitario en la experiencia depende de los dos coeficientes. No es posible aislar el efecto de una u otra variable. Notemos también que el signo del coeficiente estimado para la experiencia al cuadrado es negativo, lo cual se interpreta como que a medida que aumenta la experiencia el crecimiento porcentual esperado en el salario será decreciente.  
+En el Cuadro 6 presentamos los coeficientes estimados del modelo y los mismos multiplicados por 100. En primer lugar, si analizáramos el coeficiente de la experiencia por si solo, el aumento en la experiencia en un año manteniéndose todas las demás variables constantes se traduce en un aumento esperado del 3,08%. Sin embargo, notemos que también está presente la experiencia al cuadrado, por lo cual la variación porcentual del salario esperada dado un aumento unitario en la experiencia depende de los dos coeficientes. No es posible aislar el efecto de una u otra variable. Notemos también que el signo del coeficiente estimado para la experiencia al cuadrado es negativo, lo cual se interpreta como que a medida que aumenta la experiencia el crecimiento porcentual esperado en el salario será decreciente.  
 
 En el caso de la antigüedad, un aumento unitario de la variable, con las demás constantes se ve reflejado en un aumento porcentual del 1.38% del salario esperado.
 
 Por su parte un aumento en los años de educación tiene una relación cuadrática con el aumento porcentual en el salario (solo se encuentra presente la educación al cuadrado). Así, cuanto mayor sea la cantidad de años de educación el incremento porcentual del salario se irá haciendo mayor a su vez, por el contrario de como sucedió con la experiencia. De esta manera, considerando un individuo con $\mu$ años de educación un aumento unitario en esta variable supone un aumento porcentual del salario de $0,22 \times \Big((\mu+1)^2-\mu^2 \Big)$, dadas todas las demás variables constantes.  
 
  
-**Variables cualitativas**
-    
 Cuando nos enfrentamos al analisis de las variables cualitativas, buscamos explicar la diferencia en la variación porcentual del salario al pertenecer a una categoría u otra de la variable, respecto de la de referencia. Lo primero que observamos es que se puede hacer una distinción en los ingresos esperados dependiendo del sexo de la persona analizada. Así, una mujer tendrá un salario esperado 27.7% menor que el de un hombre, aunque ambos tengan el mismo nivel educativo, experiencia, antigüedad, trabajen en la misma área y en definitiva sean indistinguibles para todas las variables a excepción de su sexo.  
 
 Por otro lado, se aprecia una distinción entre las regiones metropolitana y no metropolitana, esperandose un salario 15.8% mayor en el primer caso, a iguales niveles de las demás variables.
@@ -591,20 +594,23 @@ La ocupación profesional se distingue del resto (servicios, administrativos y o
 
 # Conclusiones 
 
-Se llegó a un modelo lineal bayesiano válido, ya que al ser evaluado su estimación por MCMC no muestra indicios de falta de convergencia y a su vez muestra una buena capacidad de replicar los datos del logaritmo del salario originales, si bien el modelo presenta limitaciones. Entre estas se encuentra que no reproduce bien el comportamiento de la mediana del logaritmo del salario y tampoco precisamente la forma de la densidad de este último en sus máximos locales. No obstante sí reproduce bien el comportamiento de la media y el rango intercuartílico. 
+Se llegó a un modelo lineal bayesiano válido, ya que al ser evaluado su estimación por MCMC no muestra indicios de falta de convergencia y a su vez muestra una buena capacidad de replicar los datos originales del logaritmo del salario, si bien el modelo presenta limitaciones. Entre estas se encuentra que no reproduce bien la forma de la densidad de la variable explicada en sus máximos locales, así como tampoco el comportamiento de la mediana, lo cual limita su capacidad predictiva. No obstante sí reproduce bien el comportamiento de la media y el rango intercuartílico, además de que logra simular valores negativos del logaritmo del salario, a diferencia del otro modelo considerado. 
 
-Encontramos que la estimación de los parámetros mediante el enfoque bayesiano daba resultados similares a los obtenido con el método de los mínimos cuadrados ordinarios.
+Encontramos que la estimación de los parámetros mediante el enfoque bayesiano daba resultados similares a los obtenidos con el método de los mínimos cuadrados ordinarios, y en todos los casos los parámetros del modelo clásico están comprendidos dentro del intervalo de credibilidad para los parámetros del modelo bayesiano.
 
-Para mejorar el modelo se podría profundizar en el uso de la familia de distribuciones Gamma para la variable explicada, con función de enlace logarítmica, así como en la interpretación de los parámetros bajo este contexto.  
-
-
+Para mejorar el modelo se podría profundizar en el uso de la familia de distribuciones Gamma para la variable explicada, con función de enlace logarítmica, así como en la interpretación de los parámetros bajo ese contexto.  
 
 
+Respecto al análisis de los parámetros, encontramos que se espera un aumento del valor de  la variable explicada, la variación porcentual logaritmo del salario, para mayores valores de la educación, la antigüedad y la experiencia. Para este último caso, observamos que se da el efecto de rendimientos marginales decrecientes: aumenta porcentualmente de forma sostenida, pero cada vez menor.
+
+Por otro lado, notamos también que el salario disminuye para aquellas personas que son de sexo femenino en lugar de masculino, que se ubican en las regiones norte o sur en lugar de este u oeste, o que trabajan en las ramas de actividad de comercio o servicios en lugar de en construcción u otra rama de las no especificadas.
+
+
+En contraposición, las personas que son de ocupación profesional perciben un salario mayor respecto de las demás, así como también para aquellas que se ubican en la región metropolitana se observa una variación porcentual positiva del salario en detrimiento de las que no.
 
 
 
 
-\newpage 
 # Bibliografía 
 
 * A First Course in Bayesian Statistical Methods.Hoff, Peter. D. Springer. (2009).
