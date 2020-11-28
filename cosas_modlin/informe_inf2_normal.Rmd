@@ -57,8 +57,8 @@ library(bayesplot)
 
 \maketitle
 
-<!-- \vspace{5cm} -->
-<!-- ![](unnamed.jpg){width = 50%} -->
+\vspace{5cm}
+![](unnamed.jpg){width=50%, align=center}
 
 \newpage
 
@@ -415,7 +415,7 @@ En el modelo seleccionado encontramos el problema de que al comparar las $y$ rep
 
 Otra limitación de ambos modelos es su incapacidad de captar la forma exacta de la distribución en la zona de mayor densidad, que cuenta con dos máximos locales, ocurriendo una subestimación en el primer máximo local y una sobreestimación en el segundo. Esto es más pronunciado en el modelo elegido, el de errores Normales. La utilización de un modelo de los errores que sea una mixtura de dos distribuciones Gamma es una posible opción para enfrentarse a este problema, si bien no la desarrollamos en este proyecto.   
 
-A pesar del mejor ajuste del modelo con errores Gamma, la falta de claridad del funcionamiento del modelo y su interpretación, sumado a la evaluación de ambos mediante estadísticos nos llevó a descartar esta opción y optar por el modelo de errores Normales.
+A pesar del mejor ajuste del modelo con errores Gamma, la falta de claridad del funcionamiento del modelo y su interpretación nos llevó a descartar esta opción y optar por el modelo de errores Normales.
 
 [^2]: [Documentación del paquete _rstanarm_.](http://mc-stan.org/rstanarm/articles/priors.html)
 
